@@ -1,5 +1,7 @@
 package util;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
+
 public class kalmanfilter {
 	
 	private double kfUWBvalue;
@@ -378,6 +380,8 @@ public class kalmanfilter {
 	{
 		kalmanfilter kf = new kalmanfilter(80,8000,10,10000000000L,0.02);
 		double[][] answer = kf.calculate(0.5, 0.5, 1, 1, 1, 1);
+		NormalDistribution ND = new NormalDistribution(1, 100);
+		System.out.println(ND.sample());
 ////		System.out.println(answer.length);
 ////		System.out.println(answer[0].length);
 //		System.out.println("Final output");
@@ -390,7 +394,7 @@ public class kalmanfilter {
 //			}
 //			System.out.println();
 //		}
-		answer = kf.calculate(0.51, 0.51, 1.01, 1.01, 1, 1);
+//		answer = kf.calculate(0.51, 0.51, 1.01, 1.01, 1, 1);
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// hmmmm...
 		// the 0.15 values are the first time-derivative of the 0.6 value, at a time-step of 0.02
@@ -409,7 +413,7 @@ public class kalmanfilter {
 ////			System.out.println();
 ////		}
 ////		
-		answer = kf.calculate(0.5201, 0.5201, 1.02, 1.02, 1, 1);
+//		answer = kf.calculate(0.5201, 0.5201, 1.02, 1.02, 1, 1);
 ////		
 ////		System.out.println("Final output");
 ////		for (int r = 0; r<answer[0].length; r++)
@@ -421,7 +425,7 @@ public class kalmanfilter {
 ////			System.out.println();
 ////		}
 ////		
-		answer = kf.calculate(0.5303, 0.5303, 1.03, 1.03, 1, 1);
+//		answer = kf.calculate(0.5303, 0.5303, 1.03, 1.03, 1, 1);
 ////		
 ////		System.out.println("Final output");
 ////		for (int r = 0; r<answer[0].length; r++)

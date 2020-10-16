@@ -249,6 +249,7 @@ public class mainviewcontroller {
 	        kalmanfilter kf = new kalmanfilter(KFUWBvalue_internal,KfOFvalue_internal,KFIMUvalue_internal,KFcovar_internal,0.02);
 	        
 	        for (int i = 0; i<iterations; i++)
+	        //for (int i = 0; i<10; i++)
 	        {
 	        	double[][] update = kf.calculate(UWBX_sensor.get(i), UWBY_sensor.get(i), OFX_sensor.get(i), OFY_sensor.get(i), IMUX_sensor.get(i), IMUY_sensor.get(i));
 	        	//System.out.println(UWBX.get(i) + " " + OFX.get(i) + " " + IMUX.get(i));
@@ -321,11 +322,11 @@ public class mainviewcontroller {
 	
 	private List<Double> getOFX(double realOFvalue_internal)
 	{
+	
 		for (int i = 0; i<500; i++)
 		{	
 			double number = velocityX_internal+accelerateX_internal*KFsample_internal*i;
 			OFX.add(number);
-			//System.out.println(number);
 			NormalDistribution ND = new NormalDistribution(number, realOFvalue_internal);
 			OFX_sensor.add(ND.sample());
 		    //System.out.println(OFX_sensor.get(i));		
@@ -474,6 +475,20 @@ public class mainviewcontroller {
     		
     		linechartX.getData().clear();
     		linechartY.getData().clear();
+    		
+    	    UWBX = new ArrayList();
+    	    UWBY = new ArrayList();
+    	    OFX = new ArrayList();
+    	    OFY = new ArrayList();
+    	    IMUX = new ArrayList();
+    	    IMUY = new ArrayList();
+    	    
+    	    UWBX_sensor = new ArrayList();
+    	    UWBY_sensor = new ArrayList();
+    	    OFX_sensor = new ArrayList();
+    	    OFY_sensor = new ArrayList();
+    	    IMUX_sensor = new ArrayList();
+    	    IMUY_sensor = new ArrayList();
     	}    	
     	counter = 0;
     }
