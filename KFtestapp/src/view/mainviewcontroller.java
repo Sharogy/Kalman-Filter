@@ -104,12 +104,19 @@ public class mainviewcontroller {
     public  XYChart.Series realYcoords;
     public  XYChart.Series sensorYcoords;
 
-    private List<Double>UWBX;
-    private List<Double>UWBY;
-    private List<Double>OFX;
-    private List<Double>OFY;
-    private List<Double>IMUX;
-    private List<Double>IMUY;
+    private List<Double>UWBX = new ArrayList();
+    private List<Double>UWBY = new ArrayList();
+    private List<Double>OFX = new ArrayList();
+    private List<Double>OFY = new ArrayList();
+    private List<Double>IMUX = new ArrayList();
+    private List<Double>IMUY = new ArrayList();
+    
+    private List<Double>UWBX_sensor = new ArrayList();
+    private List<Double>UWBY_sensor = new ArrayList();
+    private List<Double>OFX_sensor = new ArrayList();
+    private List<Double>OFY_sensor = new ArrayList();
+    private List<Double>IMUX_sensor = new ArrayList();
+    private List<Double>IMUY_sensor = new ArrayList();
     
     private double positionX_internal;
 	private double velocityX_internal;
@@ -117,6 +124,8 @@ public class mainviewcontroller {
 	private double positionY_internal;
 	private double velocityY_internal;
 	private double accelerateY_internal;
+	
+	
 	
 	private double KFsample_internal;
 	
@@ -229,41 +238,38 @@ public class mainviewcontroller {
 	        
 	        double KFcovar_internal = Double.valueOf(KFcovarvalue.getText());
 	       
-	        
-	        UWBX = getUWBX(realUWBvalue_internal);
-	        UWBY = getUWBY(realUWBvalue_internal);
-	        OFX = getOFX(realOFvalue_internal);
-	        OFY = getOFY(realOFvalue_internal);
-	        IMUX = getIMUX(realIMUvalue_internal);
-	        IMUY = getIMUY(realIMUvalue_internal);
+	        getOFX(realOFvalue_internal);
+	        getOFY(realOFvalue_internal);
+	        getUWBX(realUWBvalue_internal);
+	        getUWBY(realUWBvalue_internal);
+	        getIMUX(realIMUvalue_internal);
+	        getIMUY(realIMUvalue_internal);
 	        
 	        KF(realUWBvalue_internal, realOFvalue_internal, realIMUvalue_internal);
 	        kalmanfilter kf = new kalmanfilter(KFUWBvalue_internal,KfOFvalue_internal,KFIMUvalue_internal,KFcovar_internal,0.02);
 	        
 	        for (int i = 0; i<iterations; i++)
 	        {
-	        	double[][] update = kf.calculate(UWBX.get(i), UWBY.get(i), OFX.get(i), OFY.get(i), IMUX.get(i), IMUY.get(i));
+	        	double[][] update = kf.calculate(UWBX_sensor.get(i), UWBY_sensor.get(i), OFX_sensor.get(i), OFY_sensor.get(i), IMUX_sensor.get(i), IMUY_sensor.get(i));
 	        	//System.out.println(UWBX.get(i) + " " + OFX.get(i) + " " + IMUX.get(i));
 	        	
 	        	String measurement = Integer.toString(i);
 	        	
 	        	int xupdate = (int) Math.round(update[0][0]*1000);
 	        	Xcoords.getData().add(new XYChart.Data(measurement, xupdate));
-	        	//System.out.println(xupdate + "xcoord");
-	        	int realxupdate = (int) ((positionX_internal+velocityX_internal*KFsample_internal*i+0.5*accelerateX_internal*KFsample_internal*KFsample_internal*i*i)*1000);
-	        	//int realxupdate = (int) (positionX_internal+(velocityX_internal)*KFsample_internal*i*1000);
-	        	realXcoords.getData().add(new XYChart.Data(measurement, realxupdate));
-	        	//System.out.println(realxupdate);
-	        	int sensorxupdate = (int) Math.round(UWBX.get(i)*1000);
-	        	//System.out.println(sensorxupdate);
-	        	sensorXcoords.getData().add(new XYChart.Data(measurement, sensorxupdate));
-	        	
 	        	int yupdate = (int) Math.round(update[1][0]*1000);	        	
 	        	Ycoords.getData().add(new XYChart.Data(measurement, yupdate));
-	        	int realyupdate = (int) ((positionX_internal+velocityY_internal*KFsample_internal*i+0.5*accelerateY_internal*KFsample_internal*KFsample_internal*i*i)*1000);
-	        	//int realyupdate = (int) (positionY_internal+(velocityY_internal)*KFsample_internal*i*1000);
+	        	
+	        	int realxupdate = (int) (UWBX.get(i)*1000);
+	        	//System.out.println(realxupdate);
+	        	realXcoords.getData().add(new XYChart.Data(measurement, realxupdate));
+	        	int realyupdate = (int) (UWBY.get(i)*1000);
 	        	realYcoords.getData().add(new XYChart.Data(measurement, realyupdate));
-	        	int sensoryupdate = (int) Math.round(UWBY.get(i)*1000);
+	        	
+	        	int sensorxupdate = (int) (UWBX_sensor.get(i)*1000);
+	        	sensorXcoords.getData().add(new XYChart.Data(measurement, sensorxupdate));
+	        	
+	        	int sensoryupdate = (int) (UWBY_sensor.get(i)*1000);
 	        	sensorYcoords.getData().add(new XYChart.Data(measurement, sensoryupdate));
 	        	
 	        }        
@@ -281,66 +287,74 @@ public class mainviewcontroller {
 	
 	private List<Double> getUWBX(double realUWBvalue_internal)
 	{
-		List<Double> UWBX = new ArrayList<Double>();
-		for (int i = 0; i<500; i++)
+		UWBX.add(positionX_internal);
+		UWBX_sensor.add((new NormalDistribution(positionX_internal,realUWBvalue_internal).sample()));
+		for (int i = 1; i<500; i++)
 		{	
-			double number = positionX_internal + velocityX_internal*KFsample_internal*i + 0.5*accelerateX_internal*KFsample_internal*KFsample_internal*i*i;
-			//double test = positionX_internal + i*(velocityX_internal)*KFsample_internal;
-			//System.out.println(number + " "+ test);
+			//NEED FIX
+			
+			double number = UWBX.get(i-1)+OFX.get(i-1)*KFsample_internal;
+			UWBX.add(number);
+			//System.out.println(number);
 			NormalDistribution ND = new NormalDistribution(number, realUWBvalue_internal);
-			UWBX.add(ND.sample());		
-		}
-		
-		return UWBX;
+			UWBX_sensor.add(ND.sample());	
+		}	
+		return UWBX_sensor;
 	}
 	
 	private List<Double> getUWBY(double realUWBvalue_internal)
 	{
-		List<Double> UWBY = new ArrayList<Double>();
-		for (int i = 0; i<500; i++)
+		UWBY.add(positionY_internal);
+		UWBY_sensor.add((new NormalDistribution(positionY_internal,realUWBvalue_internal).sample()));
+		for (int i = 1; i<500; i++)
 		{	
-			double number = positionY_internal + velocityY_internal*KFsample_internal*i + 0.5*accelerateY_internal*KFsample_internal*KFsample_internal*i*i;
+			//double number = positionY_internal + velocityY_internal*KFsample_internal*i + 0.5*accelerateY_internal*KFsample_internal*KFsample_internal*i*i;
+			//NEED FIX		
+			double number = UWBY.get(i-1) + OFY.get(i-1)*KFsample_internal; 
+			UWBY.add(number);
 			NormalDistribution ND = new NormalDistribution(number, realUWBvalue_internal);
-			UWBY.add(ND.sample());		
+			UWBY_sensor.add(ND.sample());		
 		}
-		return UWBY;
+		return UWBY_sensor;
 		
 	}
 	
 	private List<Double> getOFX(double realOFvalue_internal)
 	{
-		List<Double> OFX = new ArrayList<Double>();
 		for (int i = 0; i<500; i++)
 		{	
 			double number = velocityX_internal+accelerateX_internal*KFsample_internal*i;
+			OFX.add(number);
+			//System.out.println(number);
 			NormalDistribution ND = new NormalDistribution(number, realOFvalue_internal);
-			OFX.add(ND.sample());
-		//	System.out.println(FOX.get(i));		
+			OFX_sensor.add(ND.sample());
+		    //System.out.println(OFX_sensor.get(i));		
 		}
-		return OFX;
+		return OFX_sensor;
 	}
 	
 	private List<Double> getOFY(double realOFvalue_internal)
 	{
-		List<Double> OFY = new ArrayList<Double>();
 		for (int i = 0; i<500; i++)
 		{	
+			
 			double number = velocityY_internal+accelerateY_internal*KFsample_internal*i;
+			OFY.add(number);
 			NormalDistribution ND = new NormalDistribution(number, realOFvalue_internal);
-			OFY.add(ND.sample());
+			OFY_sensor.add(ND.sample());
 		//	System.out.println(FOY.get(i));		
 		}
-		return OFY;
+		return OFY_sensor;
 	}
 	
 	private List<Double> getIMUX(double realIMUvalue_internal)
 	{
-		List<Double> IMUX = new ArrayList<Double>();
 		for (int i = 0; i<500; i++)
 		{	
 			double number = accelerateX_internal;
+			IMUX.add(number);
 			NormalDistribution ND = new NormalDistribution(number, realIMUvalue_internal);
-			IMUX.add(ND.sample());
+			IMUX_sensor.add(ND.sample());
 			//System.out.println(IMUX.get(i));		
 		}
 		return IMUX;
@@ -348,12 +362,12 @@ public class mainviewcontroller {
 	
 	private List<Double> getIMUY(double realIMUvalue_internal)
 	{
-		List<Double> IMUY = new ArrayList<Double>();
 		for (int i = 0; i<500; i++)
 		{	
 			double number = accelerateY_internal;
+			IMUY.add(number);
 			NormalDistribution ND = new NormalDistribution(number, realIMUvalue_internal);
-			IMUY.add(ND.sample());
+			IMUY_sensor.add(ND.sample());
 			//System.out.println(IMUY.get(i));		
 		}
 		return IMUY;
