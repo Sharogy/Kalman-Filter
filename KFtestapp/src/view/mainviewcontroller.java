@@ -1,5 +1,6 @@
 package view;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import application.Main;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
@@ -17,10 +19,12 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import util.AlertBox;
 import util.kalmanfilter;
@@ -28,23 +32,7 @@ import util.kalmanfilter;
 public class mainviewcontroller {
 	
 	private Main main;
-	private Stage dialogStage;
-	
-	@FXML
-    public LineChart<String, Integer> linechartX;
-	@FXML
-    public LineChart<String, Integer> linechartY;
-
-    @FXML
-    private CategoryAxis xAxisX;
-    @FXML
-    private CategoryAxis xAxisY;
-    
-    @FXML
-    private NumberAxis yAxisX;
-    @FXML
-    private NumberAxis yAxisY;
-    
+	private Stage dialogStage; 
     
     @FXML
     private Label realUWB;
@@ -90,20 +78,31 @@ public class mainviewcontroller {
     private Slider iteration_slider;
     
     
-    
+    @FXML
+    private CheckBox avularP;
     
     @FXML
     private Button calculate;
     
-
+    @FXML
+    private AnchorPane drawingboard;
     
-    public  XYChart.Series Xcoords;
-    public  XYChart.Series realXcoords;
-    public  XYChart.Series sensorXcoords;
-    public  XYChart.Series Ycoords;
-    public  XYChart.Series realYcoords;
-    public  XYChart.Series sensorYcoords;
-
+    private FXMLLoader ploader;
+    private FXMLLoader xyloader;
+    
+    private AnchorPane ppane;
+    private AnchorPane xypane;
+    
+    private xyestimatecontroller xycontroller;
+    private pcomparisoncontroller pcontroller;
+        
+    private double positionX_internal;
+	private double velocityX_internal;
+	private double accelerateX_internal;
+	private double positionY_internal;
+	private double velocityY_internal;
+	private double accelerateY_internal;
+	
     private List<Double>UWBX = new ArrayList();
     private List<Double>UWBY = new ArrayList();
     private List<Double>OFX = new ArrayList();
@@ -117,15 +116,8 @@ public class mainviewcontroller {
     private List<Double>OFY_sensor = new ArrayList();
     private List<Double>IMUX_sensor = new ArrayList();
     private List<Double>IMUY_sensor = new ArrayList();
-    
-    private double positionX_internal;
-	private double velocityX_internal;
-	private double accelerateX_internal;
-	private double positionY_internal;
-	private double velocityY_internal;
-	private double accelerateY_internal;
 	
-	
+	private int Pmode = 1;
 	
 	private double KFsample_internal;
 	
@@ -143,34 +135,9 @@ public class mainviewcontroller {
 	
 	
 	@FXML
-    private void initialize() {
+    private void initialize() throws IOException {
 		
 		//dialogStage = main.getPrimaryStage();
-
-        xAxisX.setLabel("Measurements over time");
-        yAxisX.setLabel("Position in X coordinate");
-        xAxisX.setAnimated(false);
-        
-        xAxisY.setLabel("Measurements over time");
-        yAxisY.setLabel("Position in Y coordinate");
-        xAxisY.setAnimated(false);
-        
-        Xcoords = new Series<String, Number>();
-        realXcoords = new Series<String, Number>();
-        sensorXcoords = new Series<String, Number>();
-        Ycoords = new Series<String, Number>();
-        realYcoords = new Series<String, Number>();
-        sensorYcoords = new Series<String, Number>();
-        Xcoords.setName("Estimated X coordinates");
-        realXcoords.setName("Real X coordinates");
-        sensorXcoords.setName("Sensor X coordinates");
-        Ycoords.setName("Estimated Y coordinates");
-        realYcoords.setName("Real Y coordinates");
-        sensorYcoords.setName("sensor Y coordinates");
-        
-        linechartX.setCreateSymbols(false);
-        linechartY.setCreateSymbols(false);
-        
         
         positionX.setText("0.0");
         positionY.setText("0.0");
@@ -194,6 +161,10 @@ public class mainviewcontroller {
         iteration_slider.setValueChanging(true);
         iteration_slider.setShowTickLabels(true);
         iteration_slider.setShowTickMarks(true);
+        avularP.setSelected(true);
+        
+        loaddrawingboard();
+		loadview(xyloader, xypane);
 
         iteration_slider.valueProperty().addListener(new ChangeListener<Number>() {
 	        public void changed(ObservableValue<? extends Number> ov,
@@ -205,6 +176,36 @@ public class mainviewcontroller {
         
         //linechartY.getData().add(Ycoords);                
 
+    }
+	
+    private void loaddrawingboard() throws IOException
+    {
+    	
+    	ploader = new FXMLLoader();
+        ploader.setLocation(getClass().getResource("/view/pcomparison.fxml"));
+        xyloader = new FXMLLoader();
+        xyloader.setLocation(getClass().getResource("/view/xyestimate.fxml"));
+                
+        ppane = (AnchorPane) ploader.load();	 
+        xypane = (AnchorPane) xyloader.load(); 
+    }
+
+    
+    private void loadview(FXMLLoader loader, AnchorPane pane)
+    {
+    	drawingboard.getChildren().setAll(pane); 	
+    }
+    
+    @FXML
+    private void handlexyview()   
+    {
+    	loadview(xyloader, xypane);
+    }
+    
+    @FXML
+    private void handlepView()   
+    {
+    	loadview(ploader, ppane);
     }
 	
 	@FXML
@@ -229,11 +230,19 @@ public class mainviewcontroller {
 			
 			int iterations = Integer.valueOf(iteration.getText());
 			
+			if (avularP.isSelected())
+	        {
+	        	Pmode = 1;
+	        	System.out.println("Avular Alg");
+	        }
+	        else { Pmode = 0; System.out.println("Standard Alg"); }
+			
+			
 			double realUWBvalue_internal = Double.valueOf(realUWBvalue.getText());
 	        double realOFvalue_internal = Double.valueOf(realOFvalue.getText());
 	        double realIMUvalue_internal = Double.valueOf(realIMUvalue.getText());
 	        double KFUWBvalue_internal = Double.valueOf(KFUWBvalue.getText());
-	        double KfOFvalue_internal = Double.valueOf(KFOFvalue.getText());
+	        double KFOFvalue_internal = Double.valueOf(KFOFvalue.getText());
 	        double KFIMUvalue_internal = Double.valueOf(KFIMUvalue.getText());
 	        
 	        double KFcovar_internal = Double.valueOf(KFcovarvalue.getText());
@@ -244,42 +253,45 @@ public class mainviewcontroller {
 	        getUWBY(realUWBvalue_internal);
 	        getIMUX(realIMUvalue_internal);
 	        getIMUY(realIMUvalue_internal);
+	        	        
+	        xycontroller = xyloader.getController();
+	        pcontroller = ploader.getController();
 	        
-	        KF(realUWBvalue_internal, realOFvalue_internal, realIMUvalue_internal);
-	        kalmanfilter kf = new kalmanfilter(KFUWBvalue_internal,KfOFvalue_internal,KFIMUvalue_internal,KFcovar_internal,0.02);
+	        xycontroller.calculate(UWBX, UWBY, UWBX_sensor, UWBY_sensor, OFX_sensor, OFY_sensor, IMUX_sensor, IMUY_sensor, Pmode, iterations, KFUWBvalue_internal, KFOFvalue_internal, KFIMUvalue_internal, KFcovar_internal, KFsample_internal);
+	        pcontroller.calculate(UWBX, UWBY, UWBX_sensor, UWBY_sensor, OFX_sensor, OFY_sensor, IMUX_sensor, IMUY_sensor, Pmode, iterations, KFUWBvalue_internal, KFOFvalue_internal, KFIMUvalue_internal, KFcovar_internal, KFsample_internal);
 	        
-	        for (int i = 0; i<iterations; i++)
-	        //for (int i = 0; i<10; i++)
-	        {
-	        	double[][] update = kf.calculate(UWBX_sensor.get(i), UWBY_sensor.get(i), OFX_sensor.get(i), OFY_sensor.get(i), IMUX_sensor.get(i), IMUY_sensor.get(i));
-	        	//System.out.println(UWBX.get(i) + " " + OFX.get(i) + " " + IMUX.get(i));
-	        	
-	        	String measurement = Integer.toString(i);
-	        	
-	        	int xupdate = (int) Math.round(update[0][0]*1000);
-	        	Xcoords.getData().add(new XYChart.Data(measurement, xupdate));
-	        	int yupdate = (int) Math.round(update[1][0]*1000);	        	
-	        	Ycoords.getData().add(new XYChart.Data(measurement, yupdate));
-	        	
-	        	int realxupdate = (int) (UWBX.get(i)*1000);
-	        	//System.out.println(realxupdate);
-	        	realXcoords.getData().add(new XYChart.Data(measurement, realxupdate));
-	        	int realyupdate = (int) (UWBY.get(i)*1000);
-	        	realYcoords.getData().add(new XYChart.Data(measurement, realyupdate));
-	        	
-	        	int sensorxupdate = (int) (UWBX_sensor.get(i)*1000);
-	        	sensorXcoords.getData().add(new XYChart.Data(measurement, sensorxupdate));
-	        	
-	        	int sensoryupdate = (int) (UWBY_sensor.get(i)*1000);
-	        	sensorYcoords.getData().add(new XYChart.Data(measurement, sensoryupdate));
-	        	
-	        }        
-	        linechartX.getData().add(sensorXcoords);
-	        linechartX.getData().add(realXcoords);
-	        linechartX.getData().add(Xcoords);
-	        linechartY.getData().add(sensorYcoords);
-	        linechartY.getData().add(realYcoords);
-	        linechartY.getData().add(Ycoords);
+//	        for (int i = 0; i<iterations; i++)
+//	        //for (int i = 0; i<10; i++)
+//	        {
+//	        	double[][] update = kf.calculate(UWBX_sensor.get(i), UWBY_sensor.get(i), OFX_sensor.get(i), OFY_sensor.get(i), IMUX_sensor.get(i), IMUY_sensor.get(i), Pmode);
+//	        	//System.out.println(UWBX.get(i) + " " + OFX.get(i) + " " + IMUX.get(i));
+//	        	
+//	        	String measurement = Integer.toString(i);
+//	        	
+//	        	int xupdate = (int) Math.round(update[0][0]*1000);
+//	        	Xcoords.getData().add(new XYChart.Data(measurement, xupdate));
+//	        	int yupdate = (int) Math.round(update[1][0]*1000);	        	
+//	        	Ycoords.getData().add(new XYChart.Data(measurement, yupdate));
+//	        	
+//	        	int realxupdate = (int) (UWBX.get(i)*1000);
+//	        	//System.out.println(realxupdate);
+//	        	realXcoords.getData().add(new XYChart.Data(measurement, realxupdate));
+//	        	int realyupdate = (int) (UWBY.get(i)*1000);
+//	        	realYcoords.getData().add(new XYChart.Data(measurement, realyupdate));
+//	        	
+//	        	int sensorxupdate = (int) (UWBX_sensor.get(i)*1000);
+//	        	sensorXcoords.getData().add(new XYChart.Data(measurement, sensorxupdate));
+//	        	
+//	        	int sensoryupdate = (int) (UWBY_sensor.get(i)*1000);
+//	        	sensorYcoords.getData().add(new XYChart.Data(measurement, sensoryupdate));
+//	        	
+//	        }        
+//	        linechartX.getData().add(sensorXcoords);
+//	        linechartX.getData().add(realXcoords);
+//	        linechartX.getData().add(Xcoords);
+//	        linechartY.getData().add(sensorYcoords);
+//	        linechartY.getData().add(realYcoords);
+//	        linechartY.getData().add(Ycoords);
 		}
 		counter = 1;
 		}
@@ -374,11 +386,6 @@ public class mainviewcontroller {
 		return IMUY;
 	}
 	
-	private int KF (double UWB, double OF, double IMU)
-	{				
-		return 0;
-	}
-	
 	private boolean isInputValid() {
         String errorMessage = "";
         if (realUWBvalue.getText() == null || realUWBvalue.getText().length() == 0) {
@@ -464,32 +471,34 @@ public class mainviewcontroller {
 	
 	public void cleardata()
     {
-    	if (Xcoords != null)
-    	{
-    		Xcoords.getData().clear();
-    		Ycoords.getData().clear();
-    		realXcoords.getData().clear();
-    		realYcoords.getData().clear();
-    		sensorXcoords.getData().clear();
-    		sensorYcoords.getData().clear();
+		xycontroller.cleardata();
+		pcontroller.cleardata();
+//    	if (Xcoords != null)
+//    	{
+//    		Xcoords.getData().clear();
+//    		Ycoords.getData().clear();
+//    		realXcoords.getData().clear();
+//    		realYcoords.getData().clear();
+//    		sensorXcoords.getData().clear();
+//    		sensorYcoords.getData().clear();
+//    		
+//    		linechartX.getData().clear();
+//    		linechartY.getData().clear();
     		
-    		linechartX.getData().clear();
-    		linechartY.getData().clear();
-    		
-    	    UWBX = new ArrayList();
-    	    UWBY = new ArrayList();
-    	    OFX = new ArrayList();
-    	    OFY = new ArrayList();
-    	    IMUX = new ArrayList();
-    	    IMUY = new ArrayList();
+    	UWBX = new ArrayList();
+    	UWBY = new ArrayList();
+    	OFX = new ArrayList();
+    	OFY = new ArrayList();
+    	IMUX = new ArrayList();
+    	IMUY = new ArrayList();
     	    
-    	    UWBX_sensor = new ArrayList();
-    	    UWBY_sensor = new ArrayList();
-    	    OFX_sensor = new ArrayList();
-    	    OFY_sensor = new ArrayList();
-    	    IMUX_sensor = new ArrayList();
-    	    IMUY_sensor = new ArrayList();
-    	}    	
+    	UWBX_sensor = new ArrayList();
+    	UWBY_sensor = new ArrayList();
+    	OFX_sensor = new ArrayList();
+    	OFY_sensor = new ArrayList();
+    	IMUX_sensor = new ArrayList();
+    	IMUY_sensor = new ArrayList();
+//    	}    	
     	counter = 0;
     }
 	

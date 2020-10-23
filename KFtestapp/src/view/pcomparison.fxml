@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+
+<AnchorPane minHeight="770.0" minWidth="850.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="view.pcomparisoncontroller">
+   <children>
+      <BorderPane prefHeight="200.0" prefWidth="200.0">
+         <top>
+            <LineChart fx:id="linechartX" minHeight="350.0" minWidth="850.0" prefHeight="350.0" prefWidth="850.0" BorderPane.alignment="CENTER">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" fx:id="xAxisX" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis fx:id="yAxisX" side="LEFT" />
+              </yAxis>
+            </LineChart>
+         </top>
+         <center>
+            <LineChart fx:id="linechartY" minHeight="350.0" minWidth="850.0" prefHeight="350.0" prefWidth="850.0" BorderPane.alignment="CENTER">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" fx:id="xAxisY" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis fx:id="yAxisY" side="LEFT" />
+              </yAxis>
+            </LineChart>
+         </center>
+      </BorderPane>
+      <Label layoutX="65.0" layoutY="711.0" text="X coords" />
+      <Label layoutX="143.0" layoutY="711.0" text="Avular Squared Error" />
+      <Label layoutX="149.0" layoutY="736.0" text="STD Squared Error" />
+      <Label layoutX="425.0" layoutY="711.0" text="Y coords" />
+      <Label layoutX="505.0" layoutY="711.0" text="Avular Squared Error" />
+      <Label layoutX="511.0" layoutY="736.0" text="STD Squared Error" />
+      <Label fx:id="avularX" layoutX="283.0" layoutY="711.0" text="0" />
+      <Label fx:id="standardX" layoutX="283.0" layoutY="736.0" text="0" />
+      <Label fx:id="avularY" layoutX="644.0" layoutY="711.0" text="0" />
+      <Label fx:id="standardY" layoutX="644.0" layoutY="736.0" text="0" />
+   </children>
+</AnchorPane>

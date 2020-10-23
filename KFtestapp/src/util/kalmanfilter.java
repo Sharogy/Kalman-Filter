@@ -8,6 +8,7 @@ public class kalmanfilter {
 	private double kfOFvalue;
 	private double kfIMUvalue;
 	private double KFsample;
+	private double KFcovar;
 	
 	private int xflow;
 	private int yflow;
@@ -30,6 +31,7 @@ public class kalmanfilter {
 		this.kfOFvalue = kfOFvalue_internal;
 		this.kfIMUvalue = kFIMUvalue_internal;
 		this.KFsample = KFsample_internal;
+		this.KFcovar = KFcovar_internal;
 		double [][] temp = {
 				{1*KFcovar_internal, 0, 0, 0, 0, 0},
 				{0, 1*KFcovar_internal, 0, 0, 0, 0},
@@ -40,6 +42,23 @@ public class kalmanfilter {
 				};
 		p_prev = temp;
 	}
+	
+//	public void clear()
+//	{
+//		double[][] clearx = {{0},{0},{0},{0},{0},{0}};
+//		x_prev = clearx;
+//		double[][] clearp = {
+//				{1*KFcovar, 0, 0, 0, 0, 0},
+//				{0, 1*KFcovar, 0, 0, 0, 0},
+//				{0, 0, 1*KFcovar, 0, 0, 0},
+//				{0, 0, 0, 1*KFcovar, 0, 0},
+//				{0, 0, 0, 0, 1*KFcovar, 0},
+//				{0, 0, 0, 0, 0, 1*KFcovar}
+//				};
+//		p_prev = clearp;
+//		
+//		
+//	}
 	
 	public static double[][] addition(double[][] matrixA, double[][] matrixB)
 	{
@@ -165,7 +184,7 @@ public class kalmanfilter {
 		return finished;
 	}
 	
-	public double[][] calculate(double UWBXinput, double UWBYinput, double OFXinput, double OFYinput, double IMUXinput, double IMUYinput)
+	public double[][] calculate(double UWBXinput, double UWBYinput, double OFXinput, double OFYinput, double IMUXinput, double IMUYinput, int mode)
 	{
 		
 		Double Dt = KFsample;
@@ -324,11 +343,16 @@ public class kalmanfilter {
 				{0, 0, 0, 1, 0, 0},
 				{0, 0, 0, 0, 1, 0},
 				{0, 0, 0, 0, 0, 1}};
-
 		double[][] left = addition(identity, scalarmultiply(multiplication(K,Cm),-1.0));
 		double[][] right = multiplication(multiplication(K, Rm),transpose(K));
-		
-		P = addition(multiplication(multiplication(left, P_pred), transpose(left)),right);
+		if (mode == 1)
+		{			
+			P = addition(multiplication(multiplication(left, P_pred), transpose(left)),right);
+		}
+		else
+		{
+			P = multiplication(left, P_pred);
+		}
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// incorrect
 		// right should be K*Rm*K^T not the inverse of K
@@ -379,9 +403,15 @@ public class kalmanfilter {
 	public static void main(String[] argz)
 	{
 		kalmanfilter kf = new kalmanfilter(80,8000,10,10000000000L,0.02);
-		double[][] answer = kf.calculate(0.5, 0.5, 1, 1, 1, 1);
+		double[][] answer = kf.calculate(0.5, 0.5, 1, 1, 1, 1, 1);
+		//double[][] answer2 = kf.calculate(0.52, 0.52, 1.1, 1.1, 1, 1, 1);
+//		kf.clear();
+//		double[][] answer3 = kf.calculate(0.5, 0.5, 1, 1, 1, 1, 1);
+//		kf.clear();
+		//double[][] answer3 = kf.calculate(0.5, 0.5, 1, 1, 1, 1, 0);
+		//double[][] answer4 = kf.calculate(0.52, 0.52, 1.1, 1.1, 1, 1, 0);
 		NormalDistribution ND = new NormalDistribution(1, 100);
-		System.out.println(ND.sample());
+		//System.out.println(answer[0][0] + "  " +answer2[0][0] + "  " + answer3[0][0] + "  " + answer4[0][0]);
 ////		System.out.println(answer.length);
 ////		System.out.println(answer[0].length);
 //		System.out.println("Final output");
